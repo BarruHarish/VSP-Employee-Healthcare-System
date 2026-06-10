@@ -23,7 +23,7 @@
         <!-- Step 2: Select Department -->
         <div class="form-group" style="margin-bottom: 20px;">
             <label style="font-weight: 600; color: #28a745; font-size: 1.1rem;">Step 2: Select Department</label>
-            <select name="department_id" class="form-control" required style="margin-top: 10px;">
+            <select name="department_id" id="department_id" class="form-control" required style="margin-top: 10px;">
                 <option value="">-- Select Department --</option>
                 {% for dept in departments %}
                 <option value="{{ dept.id }}">{{ dept.name }}</option>
@@ -34,13 +34,10 @@
         <!-- Step 3: Select Doctor -->
         <div class="form-group" style="margin-bottom: 20px;">
             <label style="font-weight: 600; color: #28a745; font-size: 1.1rem;">Step 3: Select Doctor</label>
-            <select name="doctor_id" class="form-control" required style="margin-top: 10px;">
-                <option value="">-- Select Doctor --</option>
-                {% for doc in doctors %}
-                <option value="{{ doc.id }}">{{ doc.name }} ({{ doc.specialization }})</option>
-                {% endfor %}
+            <select name="doctor_id" id="doctor_id" class="form-control" required style="margin-top: 10px;">
+                <option value="">-- Select Department First --</option>
             </select>
-            <small style="color: var(--text-muted);">Please select a doctor that belongs to your selected department.</small>
+            <small style="color: var(--text-muted);">This list is automatically filtered based on the selected department.</small>
         </div>
 
         <!-- Step 4: Select Date -->
@@ -70,4 +67,44 @@
 
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const deptSelect = document.getElementById('department_id');
+        const docSelect = document.getElementById('doctor_id');
+
+        deptSelect.addEventListener('change', function() {
+            const deptId = this.value;
+            
+            // Clear current doctors
+            docSelect.innerHTML = '<option value="">-- Loading Doctors... --</option>';
+            
+            if (!deptId) {
+                docSelect.innerHTML = '<option value="">-- Select Department First --</option>';
+                return;
+            }
+
+            // Fetch doctors for this department
+            fetch(`/api/doctors/${deptId}`)
+                .then(response => response.json())
+                .then(data => {
+                    docSelect.innerHTML = '<option value="">-- Select Doctor --</option>';
+                    if (data.length === 0) {
+                        docSelect.innerHTML = '<option value="">-- No doctors found in this department --</option>';
+                        return;
+                    }
+                    data.forEach(doc => {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = `${doc.name} (${doc.specialization})`;
+                        docSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching doctors:', error);
+                    docSelect.innerHTML = '<option value="">-- Error loading doctors --</option>';
+                });
+        });
+    });
+</script>
 {% endblock %}

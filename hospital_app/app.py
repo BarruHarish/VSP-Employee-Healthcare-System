@@ -37,8 +37,8 @@ def register():
         conn = get_db_connection()
         try:
             conn.execute('''
-                INSERT INTO employees (employee_name, employee_id, mobile, password, department, designation, email, dob, gender, blood_group, address) 
-                VALUES (?, ?, ?, ?, '', '', '', '', '', '', '')
+                INSERT INTO employees (employee_name, employee_id, mobile, password, department, designation, email, dob, gender, blood_group, address, status) 
+                VALUES (?, ?, ?, ?, '', '', '', '', '', '', '', 'Active')
             ''', (employee_name, employee_id, mobile_number, hashed_pw))
             conn.commit()
             flash('Registration successful! Please login.', 'success')
@@ -97,14 +97,14 @@ def login():
             else:
                 flash('Invalid admin credentials', 'danger')
         else:
-            employee = conn.execute('SELECT * FROM employees WHERE employee_id = ?', (user_id_input,)).fetchone()
+            employee = conn.execute('SELECT * FROM employees WHERE employee_id = ? AND status="Active"', (user_id_input,)).fetchone()
             if employee and check_password_hash(employee['password'], password):
                 session['user_id'] = employee['id']
                 session['role'] = 'employee'
                 session['name'] = employee['employee_name']
                 return redirect(url_for('dashboard'))
             else:
-                flash('Invalid Employee ID or password', 'danger')
+                flash('Invalid Employee ID, password, or account is inactive.', 'danger')
         conn.close()
 
     return render_template('login.html')
@@ -114,6 +114,16 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('login'))
+
+# --- API Routes ---
+@app.route('/api/doctors/<int:department_id>')
+def api_get_doctors(department_id):
+    conn = get_db_connection()
+    doctors = conn.execute('SELECT id, name, specialization FROM doctors WHERE department_id = ? AND status="Active"', (department_id,)).fetchall()
+    conn.close()
+    docs_list = [{'id': doc['id'], 'name': doc['name'], 'specialization': doc['specialization']} for doc in doctors]
+    return jsonify(docs_list)
+
 
 # --- Employee Routes ---
 
@@ -128,7 +138,6 @@ def dashboard():
         
     conn = get_db_connection()
     employee = conn.execute('SELECT * FROM employees WHERE id = ?', (session['user_id'],)).fetchone()
-    
     dependents = conn.execute('SELECT * FROM dependents WHERE employee_id = ?', (session['user_id'],)).fetchall()
     
     appointments = conn.execute('''
@@ -141,7 +150,6 @@ def dashboard():
     ''', (session['user_id'],)).fetchall()
     
     conn.close()
-    
     return render_template('employee_dashboard.html', employee=employee, dependents=dependents, appointments=appointments)
 
 @app.route('/dependents', methods=['GET', 'POST'])
@@ -149,7 +157,6 @@ def employee_dependents():
     if not check_employee(): return redirect(url_for('login'))
     
     conn = get_db_connection()
-    
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'add':
@@ -197,7 +204,6 @@ def employee_dependents():
 
     dependents = conn.execute('SELECT * FROM dependents WHERE employee_id = ?', (session['user_id'],)).fetchall()
     conn.close()
-    
     return render_template('employee_dependents.html', dependents=dependents)
 
 @app.route('/book', methods=['GET', 'POST'])
@@ -213,7 +219,6 @@ def book():
         time_slot = request.form['appointment_time']
         appointment_number = 'APT' + datetime.now().strftime('%Y%m%d%H%M%S')
         
-        # Parse patient selection
         if patient_selection == 'self':
             emp = conn.execute('SELECT employee_name FROM employees WHERE id = ?', (session['user_id'],)).fetchone()
             patient_name = emp['employee_name']
@@ -235,11 +240,10 @@ def book():
         return redirect(url_for('dashboard'))
         
     departments = conn.execute('SELECT * FROM departments WHERE status="Active"').fetchall()
-    doctors = conn.execute('SELECT * FROM doctors WHERE status="Active"').fetchall()
     dependents = conn.execute('SELECT * FROM dependents WHERE employee_id = ? AND status="Active"', (session['user_id'],)).fetchall()
     conn.close()
     
-    return render_template('employee_book.html', departments=departments, doctors=doctors, dependents=dependents)
+    return render_template('employee_book.html', departments=departments, dependents=dependents)
 
 
 # --- Admin Routes ---
@@ -256,9 +260,10 @@ def admin_dashboard():
     
     conn = get_db_connection()
     stats = {}
-    stats['total_departments'] = conn.execute('SELECT COUNT(*) FROM departments').fetchone()[0]
+    stats['total_employees'] = conn.execute('SELECT COUNT(*) FROM employees').fetchone()[0]
+    stats['total_dependents'] = conn.execute('SELECT COUNT(*) FROM dependents').fetchone()[0]
     stats['total_doctors'] = conn.execute('SELECT COUNT(*) FROM doctors').fetchone()[0]
-    stats['total_patients'] = conn.execute('SELECT COUNT(*) FROM employees').fetchone()[0] # Representing employees as registered patients
+    stats['total_departments'] = conn.execute('SELECT COUNT(*) FROM departments').fetchone()[0]
     
     today = datetime.now().strftime('%Y-%m-%d')
     stats['today_appointments'] = conn.execute('SELECT COUNT(*) FROM appointments WHERE appointment_date = ?', (today,)).fetchone()[0]
@@ -280,7 +285,6 @@ def admin_dashboard():
 def admin_departments():
     if not check_admin(): return redirect(url_for('login'))
     conn = get_db_connection()
-    
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'add':
@@ -296,7 +300,6 @@ def admin_departments():
                 flash('Department added successfully!', 'success')
             except sqlite3.IntegrityError:
                 flash('Department Code already exists.', 'danger')
-                
         elif action == 'edit':
             id = request.form['id']
             name = request.form['name']
@@ -305,13 +308,11 @@ def admin_departments():
             conn.execute('UPDATE departments SET name=?, description=?, status=? WHERE id=?', (name, desc, status, id))
             conn.commit()
             flash('Department updated successfully!', 'success')
-            
         elif action == 'delete':
             id = request.form['id']
             conn.execute('DELETE FROM departments WHERE id=?', (id,))
             conn.commit()
             flash('Department deleted successfully!', 'success')
-            
         return redirect(url_for('admin_departments'))
 
     departments = conn.execute('SELECT * FROM departments ORDER BY id DESC').fetchall()
@@ -323,7 +324,6 @@ def admin_departments():
 def admin_doctors():
     if not check_admin(): return redirect(url_for('login'))
     conn = get_db_connection()
-    
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'add':
@@ -337,14 +337,12 @@ def admin_doctors():
             days = request.form['available_days']
             slots = request.form['available_time_slots']
             status = request.form['status']
-            
             conn.execute('''
                 INSERT INTO doctors (name, department_id, specialization, qualification, experience, phone_number, email, available_days, available_time_slots, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', (name, dept_id, spec, qual, exp, phone, email, days, slots, status))
             conn.commit()
             flash('Doctor added successfully!', 'success')
-            
         elif action == 'edit':
             id = request.form['id']
             name = request.form['name']
@@ -357,20 +355,17 @@ def admin_doctors():
             days = request.form['available_days']
             slots = request.form['available_time_slots']
             status = request.form['status']
-            
             conn.execute('''
                 UPDATE doctors SET name=?, department_id=?, specialization=?, qualification=?, experience=?, phone_number=?, email=?, available_days=?, available_time_slots=?, status=?
                 WHERE id=?
             ''', (name, dept_id, spec, qual, exp, phone, email, days, slots, status, id))
             conn.commit()
             flash('Doctor updated successfully!', 'success')
-            
         elif action == 'delete':
             id = request.form['id']
             conn.execute('DELETE FROM doctors WHERE id=?', (id,))
             conn.commit()
             flash('Doctor deleted successfully!', 'success')
-            
         return redirect(url_for('admin_doctors'))
 
     doctors = conn.execute('''
@@ -383,14 +378,112 @@ def admin_doctors():
     conn.close()
     return render_template('admin_doctors.html', doctors=doctors, departments=departments)
 
-# Admin Patients (Now reading from Employees)
-@app.route('/admin/patients')
+# Admin Employees
+@app.route('/admin/employees', methods=['GET', 'POST'])
+def admin_employees():
+    if not check_admin(): return redirect(url_for('login'))
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'add':
+            emp_id = request.form['employee_id']
+            name = request.form['employee_name']
+            dept = request.form['department']
+            desig = request.form['designation']
+            mobile = request.form['mobile']
+            email = request.form['email']
+            dob = request.form['dob']
+            gender = request.form['gender']
+            bg = request.form['blood_group']
+            addr = request.form['address']
+            status = request.form['status']
+            pw = generate_password_hash('password123') # Default password
+            
+            try:
+                conn.execute('''
+                    INSERT INTO employees (employee_id, employee_name, department, designation, mobile, email, dob, gender, blood_group, address, status, password)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', (emp_id, name, dept, desig, mobile, email, dob, gender, bg, addr, status, pw))
+                conn.commit()
+                flash('Employee added successfully!', 'success')
+            except sqlite3.IntegrityError:
+                flash('Employee ID already exists.', 'danger')
+                
+        elif action == 'edit':
+            id = request.form['id']
+            name = request.form['employee_name']
+            dept = request.form['department']
+            desig = request.form['designation']
+            mobile = request.form['mobile']
+            email = request.form['email']
+            dob = request.form['dob']
+            gender = request.form['gender']
+            bg = request.form['blood_group']
+            addr = request.form['address']
+            status = request.form['status']
+            
+            conn.execute('''
+                UPDATE employees SET employee_name=?, department=?, designation=?, mobile=?, email=?, dob=?, gender=?, blood_group=?, address=?, status=?
+                WHERE id=?
+            ''', (name, dept, desig, mobile, email, dob, gender, bg, addr, status, id))
+            conn.commit()
+            flash('Employee updated successfully!', 'success')
+            
+        elif action == 'delete':
+            id = request.form['id']
+            # Delete dependents too? Yes
+            conn.execute('DELETE FROM dependents WHERE employee_id=?', (id,))
+            conn.execute('DELETE FROM employees WHERE id=?', (id,))
+            conn.commit()
+            flash('Employee and their dependents deleted successfully!', 'success')
+            
+        return redirect(url_for('admin_employees'))
+
+    employees = conn.execute('SELECT * FROM employees ORDER BY id DESC').fetchall()
+    conn.close()
+    return render_template('admin_employees.html', employees=employees)
+
+# Admin Patients / Dependents
+@app.route('/admin/patients', methods=['GET', 'POST'])
 def admin_patients():
     if not check_admin(): return redirect(url_for('login'))
     conn = get_db_connection()
-    employees = conn.execute('SELECT * FROM employees ORDER BY id DESC').fetchall()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'edit':
+            dep_id = request.form['dependent_id']
+            name = request.form['dependent_name']
+            mobile = request.form['mobile']
+            dob = request.form['dob']
+            status = request.form['status']
+            
+            conn.execute('''
+                UPDATE dependents SET dependent_name=?, mobile=?, dob=?, status=?
+                WHERE dependent_id=?
+            ''', (name, mobile, dob, status, dep_id))
+            conn.commit()
+            flash('Dependent updated successfully!', 'success')
+            
+        elif action == 'delete':
+            dep_id = request.form['dependent_id']
+            conn.execute('DELETE FROM dependents WHERE dependent_id=?', (dep_id,))
+            conn.commit()
+            flash('Dependent deleted successfully!', 'success')
+            
+        return redirect(url_for('admin_patients'))
+
+    # Fetch dependents with employee info
+    dependents = conn.execute('''
+        SELECT d.*, e.employee_id as emp_code, e.employee_name as emp_name
+        FROM dependents d
+        JOIN employees e ON d.employee_id = e.id
+        ORDER BY d.dependent_id DESC
+    ''').fetchall()
+    
     conn.close()
-    return render_template('admin_patients.html', patients=employees)
+    return render_template('admin_patients.html', dependents=dependents)
 
 # Admin Appointments
 @app.route('/admin/appointments', methods=['GET', 'POST'])
@@ -406,20 +499,37 @@ def admin_appointments():
             conn.execute('UPDATE appointments SET status=? WHERE appointment_id=?', (status, id))
             conn.commit()
             flash(f'Appointment marked as {status}.', 'success')
-            
         return redirect(url_for('admin_appointments'))
 
+    # Handling filters
+    doctor_id = request.args.get('doctor_id')
+    department_id = request.args.get('department_id')
+    
     query = '''
         SELECT a.*, e.employee_id as emp_code, d.name as doctor_name, dep.name as dept_name
         FROM appointments a
         JOIN employees e ON a.employee_id = e.id
         JOIN doctors d ON a.doctor_id = d.id
         JOIN departments dep ON a.department_id = dep.id
-        ORDER BY a.appointment_date DESC, a.appointment_time DESC
+        WHERE 1=1
     '''
-    appointments = conn.execute(query).fetchall()
+    params = []
+    
+    if doctor_id:
+        query += " AND a.doctor_id = ?"
+        params.append(doctor_id)
+    if department_id:
+        query += " AND a.department_id = ?"
+        params.append(department_id)
+        
+    query += " ORDER BY a.appointment_date DESC, a.appointment_time DESC"
+    
+    appointments = conn.execute(query, params).fetchall()
+    doctors = conn.execute('SELECT id, name FROM doctors').fetchall()
+    departments = conn.execute('SELECT id, name FROM departments').fetchall()
+    
     conn.close()
-    return render_template('admin_appointments.html', appointments=appointments)
+    return render_template('admin_appointments.html', appointments=appointments, doctors=doctors, departments=departments)
 
 # Admin Reports
 @app.route('/admin/reports')

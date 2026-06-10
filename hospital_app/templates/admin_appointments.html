@@ -1,16 +1,43 @@
 {% extends "admin_base.html" %}
 
 {% block content %}
-<div class="page-header">
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" style="margin-bottom: 20px;">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
     <h1 class="page-title">Appointments Management</h1>
+    
+    <form action="{{ url_for('admin_appointments') }}" method="GET" style="display: flex; gap: 10px; align-items: center; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <select name="department_id" class="form-control" style="width: auto;">
+            <option value="">All Departments</option>
+            {% for dept in departments %}
+            <option value="{{ dept.id }}" {% if request.args.get('department_id')|string == dept.id|string %}selected{% endif %}>{{ dept.name }}</option>
+            {% endfor %}
+        </select>
+        
+        <select name="doctor_id" class="form-control" style="width: auto;">
+            <option value="">All Doctors</option>
+            {% for doc in doctors %}
+            <option value="{{ doc.id }}" {% if request.args.get('doctor_id')|string == doc.id|string %}selected{% endif %}>{{ doc.name }}</option>
+            {% endfor %}
+        </select>
+        
+        <button type="submit" class="btn-primary" style="padding: 8px 15px;"><i class="fas fa-filter"></i> Filter</button>
+        <a href="{{ url_for('admin_appointments') }}" class="btn-secondary" style="padding: 8px 15px; text-decoration: none; color: #333; background: #eee; border-radius: 4px; border: 1px solid #ccc;">Clear</a>
+    </form>
 </div>
 
 <div class="table-container">
     <div class="table-header">
-        <input type="text" class="search-box" id="aptSearch" data-target="#aptTable" placeholder="Search Appointments...">
+        <input type="text" class="search-box" id="appointmentSearch" data-target="#appointmentTable" placeholder="Search Appointments...">
     </div>
     
-    <table class="data-table" id="aptTable">
+    <table class="data-table" id="appointmentTable">
         <thead>
             <tr>
                 <th>Apt. Number</th>
@@ -25,11 +52,11 @@
         <tbody>
             {% for apt in appointments %}
             <tr>
-                <td><strong>{{ apt.appointment_number }}</strong></td>
-                <td>{{ apt.patient_name }}</td>
+                <td><strong>{{ apt.appointment_number }}</strong><br><small>Emp: {{ apt.emp_code }}</small></td>
+                <td>{{ apt.patient_name }}<br><small class="badge badge-active" style="font-size: 0.6rem;">{{ apt.relationship }}</small></td>
                 <td>{{ apt.doctor_name }}</td>
                 <td>{{ apt.dept_name }}</td>
-                <td>{{ apt.date }}<br><small>{{ apt.time_slot }}</small></td>
+                <td>{{ apt.appointment_date }} <br><small>{{ apt.appointment_time }}</small></td>
                 <td>
                     <span class="badge 
                         {% if apt.status == 'Pending' %}badge-pending
@@ -39,22 +66,22 @@
                         {{ apt.status }}
                     </span>
                 </td>
-                <td>
+                <td class="action-btns" style="white-space: nowrap;">
                     {% if apt.status == 'Pending' %}
-                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;">
+                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;" onsubmit="return confirm('Approve this appointment?');">
                         <input type="hidden" name="action" value="update_status">
                         <input type="hidden" name="id" value="{{ apt.appointment_id }}">
                         <input type="hidden" name="status" value="Approved">
                         <button type="submit" class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; margin-right: 5px;">Approve</button>
                     </form>
-                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;">
+                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;" onsubmit="return confirm('Cancel this appointment?');">
                         <input type="hidden" name="action" value="update_status">
                         <input type="hidden" name="id" value="{{ apt.appointment_id }}">
                         <input type="hidden" name="status" value="Cancelled">
                         <button type="submit" class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; background-color: var(--danger-color);">Cancel</button>
                     </form>
                     {% elif apt.status == 'Approved' %}
-                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;">
+                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;" onsubmit="return confirm('Mark this appointment as Completed?');">
                         <input type="hidden" name="action" value="update_status">
                         <input type="hidden" name="id" value="{{ apt.appointment_id }}">
                         <input type="hidden" name="status" value="Completed">
@@ -65,7 +92,7 @@
             </tr>
             {% else %}
             <tr>
-                <td colspan="7" style="text-align: center;">No appointments found.</td>
+                <td colspan="7" style="text-align: center;">No appointments found matching your criteria.</td>
             </tr>
             {% endfor %}
         </tbody>

@@ -23,7 +23,8 @@
             <li><a href="{{ url_for('admin_dashboard') }}" class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}"><i class="fas fa-chart-pie"></i> Dashboard</a></li>
             <li><a href="{{ url_for('admin_departments') }}" class="{% if request.endpoint == 'admin_departments' %}active{% endif %}"><i class="fas fa-building"></i> Departments</a></li>
             <li><a href="{{ url_for('admin_doctors') }}" class="{% if request.endpoint == 'admin_doctors' %}active{% endif %}"><i class="fas fa-user-md"></i> Doctors</a></li>
-            <li><a href="{{ url_for('admin_patients') }}" class="{% if request.endpoint == 'admin_patients' %}active{% endif %}"><i class="fas fa-users"></i> Patients</a></li>
+            <li><a href="{{ url_for('admin_employees') }}" class="{% if request.endpoint == 'admin_employees' %}active{% endif %}"><i class="fas fa-id-badge"></i> Manage Employees</a></li>
+            <li><a href="{{ url_for('admin_patients') }}" class="{% if request.endpoint == 'admin_patients' %}active{% endif %}"><i class="fas fa-users"></i> Manage Dependents</a></li>
             <li><a href="{{ url_for('admin_appointments') }}" class="{% if request.endpoint == 'admin_appointments' %}active{% endif %}"><i class="fas fa-calendar-check"></i> Appointments</a></li>
             <li><a href="{{ url_for('admin_reports') }}" class="{% if request.endpoint == 'admin_reports' %}active{% endif %}"><i class="fas fa-file-invoice"></i> Reports</a></li>
         </ul>

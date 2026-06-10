@@ -6,14 +6,22 @@
 </div>
 
 <div class="dashboard-cards">
-    <div class="card">
+    <div class="card" style="border-left-color: #6f42c1;">
         <div class="card-info">
-            <h3>Total Departments</h3>
-            <h2>{{ stats.total_departments }}</h2>
+            <h3>Total Employees</h3>
+            <h2>{{ stats.total_employees }}</h2>
         </div>
-        <div class="card-icon"><i class="fas fa-building"></i></div>
+        <div class="card-icon" style="color: #6f42c1;"><i class="fas fa-id-badge"></i></div>
     </div>
     
+    <div class="card" style="border-left-color: #e83e8c;">
+        <div class="card-info">
+            <h3>Total Dependents</h3>
+            <h2>{{ stats.total_dependents }}</h2>
+        </div>
+        <div class="card-icon" style="color: #e83e8c;"><i class="fas fa-users"></i></div>
+    </div>
+
     <div class="card">
         <div class="card-info">
             <h3>Total Doctors</h3>
@@ -21,13 +29,13 @@
         </div>
         <div class="card-icon"><i class="fas fa-user-md"></i></div>
     </div>
-
+    
     <div class="card">
         <div class="card-info">
-            <h3>Total Patients</h3>
-            <h2>{{ stats.total_patients }}</h2>
+            <h3>Total Departments</h3>
+            <h2>{{ stats.total_departments }}</h2>
         </div>
-        <div class="card-icon"><i class="fas fa-users"></i></div>
+        <div class="card-icon"><i class="fas fa-building"></i></div>
     </div>
 
     <div class="card" style="border-left-color: var(--success-color);">
@@ -75,10 +83,10 @@
             {% for apt in recent_appointments %}
             <tr>
                 <td>{{ apt.appointment_number }}</td>
-                <td>{{ apt.patient_name }}</td>
+                <td>{{ apt.patient_name }} <br><small class="badge badge-active" style="font-size: 0.6rem;">{{ apt.relationship }}</small></td>
                 <td>{{ apt.doctor_name }}</td>
-                <td>{{ apt.date }}</td>
-                <td>{{ apt.time_slot }}</td>
+                <td>{{ apt.appointment_date }}</td>
+                <td>{{ apt.appointment_time }}</td>
                 <td>
                     <span class="badge 
                         {% if apt.status == 'Pending' %}badge-pending

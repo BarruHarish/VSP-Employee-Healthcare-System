@@ -36,6 +36,7 @@ def init_db():
             gender TEXT,
             blood_group TEXT,
             address TEXT,
+            status TEXT DEFAULT 'Active',
             password TEXT NOT NULL
         )
     ''')

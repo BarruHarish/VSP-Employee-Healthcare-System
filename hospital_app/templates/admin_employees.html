@@ -1,0 +1,224 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Manage Employees</h1>
+    <button class="btn-primary" data-modal-target="addEmployeeModal"><i class="fas fa-plus"></i> Add Employee</button>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <input type="text" class="search-box" id="employeeSearch" data-target="#employeeTable" placeholder="Search Employees...">
+    </div>
+    
+    <table class="data-table" id="employeeTable">
+        <thead>
+            <tr>
+                <th>Emp ID</th>
+                <th>Name / Designation</th>
+                <th>Department</th>
+                <th>Contact Info</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for emp in employees %}
+            <tr>
+                <td><strong>{{ emp.employee_id }}</strong></td>
+                <td>{{ emp.employee_name }}<br><small>{{ emp.designation }}</small></td>
+                <td>{{ emp.department }}</td>
+                <td>{{ emp.mobile }}<br><small>{{ emp.email }}</small></td>
+                <td>
+                    <span class="badge {% if emp.status == 'Active' %}badge-active{% else %}badge-inactive{% endif %}">
+                        {{ emp.status }}
+                    </span>
+                </td>
+                <td class="action-btns">
+                    <button class="edit" data-modal-target="editEmployeeModal"
+                            data-id="{{ emp.id }}"
+                            data-employee_id="{{ emp.employee_id }}"
+                            data-employee_name="{{ emp.employee_name }}"
+                            data-department="{{ emp.department }}"
+                            data-designation="{{ emp.designation }}"
+                            data-mobile="{{ emp.mobile }}"
+                            data-email="{{ emp.email }}"
+                            data-dob="{{ emp.dob }}"
+                            data-gender="{{ emp.gender }}"
+                            data-blood_group="{{ emp.blood_group }}"
+                            data-address="{{ emp.address }}"
+                            data-status="{{ emp.status }}"
+                            title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form action="{{ url_for('admin_employees') }}" method="POST" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this employee? This will also delete all their dependents and appointment history.');">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" value="{{ emp.id }}">
+                        <button type="submit" class="delete" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No employees found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Employee Modal -->
+<div id="addEmployeeModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <span class="close-modal">&times;</span>
+        <h2 class="modal-title">Add Employee</h2>
+        <form action="{{ url_for('admin_employees') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <input type="hidden" name="action" value="add">
+            
+            <div class="form-group">
+                <label>Employee ID</label>
+                <input type="text" name="employee_id" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Employee Name</label>
+                <input type="text" name="employee_name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Department</label>
+                <input type="text" name="department" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Designation</label>
+                <input type="text" name="designation" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="text" name="mobile" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" name="dob" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Gender</label>
+                <select name="gender" class="form-control">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Blood Group</label>
+                <input type="text" name="blood_group" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Address</label>
+                <textarea name="address" class="form-control" rows="2"></textarea>
+            </div>
+            
+            <div style="grid-column: 1 / -1; margin-top: 15px;">
+                <button type="submit" class="btn-primary" style="width: 100%;">Add Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Employee Modal -->
+<div id="editEmployeeModal" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <span class="close-modal">&times;</span>
+        <h2 class="modal-title">Edit Employee</h2>
+        <form action="{{ url_for('admin_employees') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="id" value="">
+            
+            <div class="form-group">
+                <label>Employee ID (Read Only)</label>
+                <input type="text" name="employee_id" class="form-control" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label>Employee Name</label>
+                <input type="text" name="employee_name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Department</label>
+                <input type="text" name="department" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Designation</label>
+                <input type="text" name="designation" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="text" name="mobile" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" name="dob" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Gender</label>
+                <select name="gender" class="form-control">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Blood Group</label>
+                <input type="text" name="blood_group" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Address</label>
+                <textarea name="address" class="form-control" rows="2"></textarea>
+            </div>
+            
+            <div style="grid-column: 1 / -1; margin-top: 15px;">
+                <button type="submit" class="btn-primary" style="width: 100%;">Update Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
