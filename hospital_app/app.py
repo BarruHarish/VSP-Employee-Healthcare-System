@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_session import Session
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import sqlite3
 import os
 from datetime import datetime
@@ -11,6 +12,10 @@ app.config["SESSION_PERMANENT"] = False
 app.config["SESSION_TYPE"] = "filesystem"
 app.secret_key = "super_secret_key" # Replace with a secure random key in production
 Session(app)
+
+UPLOAD_FOLDER = os.path.join('static', 'uploads', 'profiles')
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Database helper function
 def get_db_connection():
@@ -37,8 +42,8 @@ def register():
         conn = get_db_connection()
         try:
             conn.execute('''
-                INSERT INTO employees (employee_name, employee_id, mobile, password, department, designation, email, dob, gender, blood_group, address, status) 
-                VALUES (?, ?, ?, ?, '', '', '', '', '', '', '', 'Active')
+                INSERT INTO employees (employee_name, employee_id, mobile, password, department, designation, email, dob, gender, blood_group, address, status, profile_photo) 
+                VALUES (?, ?, ?, ?, '', '', '', '', '', '', '', 'Active', '')
             ''', (employee_name, employee_id, mobile_number, hashed_pw))
             conn.commit()
             flash('Registration successful! Please login.', 'success')
@@ -150,7 +155,66 @@ def dashboard():
     ''', (session['user_id'],)).fetchall()
     
     conn.close()
-    return render_template('employee_dashboard.html', employee=employee, dependents=dependents, appointments=appointments)
+
+    # Calculate Profile Completion
+    fields_to_check = ['employee_name', 'department', 'designation', 'mobile', 'email', 'dob', 'gender', 'blood_group', 'address', 'profile_photo']
+    filled_fields = sum(1 for field in fields_to_check if employee[field] and str(employee[field]).strip() != '')
+    completion_percentage = int((filled_fields / len(fields_to_check)) * 100)
+
+    return render_template('employee_dashboard.html', employee=employee, dependents=dependents, appointments=appointments, completion_percentage=completion_percentage)
+
+@app.route('/profile', methods=['GET', 'POST'])
+def employee_profile():
+    if not check_employee(): return redirect(url_for('login'))
+    
+    conn = get_db_connection()
+    employee = conn.execute('SELECT * FROM employees WHERE id = ?', (session['user_id'],)).fetchone()
+    
+    if request.method == 'POST':
+        name = request.form['employee_name']
+        department = request.form['department']
+        designation = request.form['designation']
+        mobile = request.form['mobile']
+        email = request.form['email']
+        dob = request.form['dob']
+        gender = request.form['gender']
+        blood_group = request.form['blood_group']
+        address = request.form['address']
+        
+        # Validation
+        if not mobile.isdigit() or len(mobile) < 10:
+            flash('Invalid mobile number.', 'danger')
+            return redirect(url_for('employee_profile'))
+            
+        if '@' not in email or '.' not in email:
+            flash('Invalid email address.', 'danger')
+            return redirect(url_for('employee_profile'))
+
+        # Handle Profile Photo Upload
+        photo_filename = employee['profile_photo']
+        if 'profile_photo' in request.files:
+            file = request.files['profile_photo']
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                unique_filename = f"{session['user_id']}_{uuid.uuid4().hex}_{filename}"
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+                file.save(file_path)
+                photo_filename = f"uploads/profiles/{unique_filename}"
+        
+        conn.execute('''
+            UPDATE employees 
+            SET employee_name=?, department=?, designation=?, mobile=?, email=?, dob=?, gender=?, blood_group=?, address=?, profile_photo=?
+            WHERE id=?
+        ''', (name, department, designation, mobile, email, dob, gender, blood_group, address, photo_filename, session['user_id']))
+        conn.commit()
+        conn.close()
+        
+        session['name'] = name # Update session name just in case
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('dashboard'))
+
+    conn.close()
+    return render_template('employee_profile.html', employee=employee)
 
 @app.route('/dependents', methods=['GET', 'POST'])
 def employee_dependents():
@@ -402,8 +466,8 @@ def admin_employees():
             
             try:
                 conn.execute('''
-                    INSERT INTO employees (employee_id, employee_name, department, designation, mobile, email, dob, gender, blood_group, address, status, password)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    INSERT INTO employees (employee_id, employee_name, department, designation, mobile, email, dob, gender, blood_group, address, status, password, profile_photo)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '')
                 ''', (emp_id, name, dept, desig, mobile, email, dob, gender, bg, addr, status, pw))
                 conn.commit()
                 flash('Employee added successfully!', 'success')
@@ -432,7 +496,6 @@ def admin_employees():
             
         elif action == 'delete':
             id = request.form['id']
-            # Delete dependents too? Yes
             conn.execute('DELETE FROM dependents WHERE employee_id=?', (id,))
             conn.execute('DELETE FROM employees WHERE id=?', (id,))
             conn.commit()
@@ -474,7 +537,6 @@ def admin_patients():
             
         return redirect(url_for('admin_patients'))
 
-    # Fetch dependents with employee info
     dependents = conn.execute('''
         SELECT d.*, e.employee_id as emp_code, e.employee_name as emp_name
         FROM dependents d
@@ -501,7 +563,6 @@ def admin_appointments():
             flash(f'Appointment marked as {status}.', 'success')
         return redirect(url_for('admin_appointments'))
 
-    # Handling filters
     doctor_id = request.args.get('doctor_id')
     department_id = request.args.get('department_id')
     
@@ -568,8 +629,5 @@ def admin_reports():
     
     return render_template('admin_reports.html', chart_data=chart_data)
 
-import os
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    app.run(debug=True)
