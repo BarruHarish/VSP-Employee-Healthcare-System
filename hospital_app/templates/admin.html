@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h2>Admin Dashboard</h2>
+</div>
+
+<div class="admin-grid">
+    <!-- Departments Management -->
+    <div class="card">
+        <h3>Manage Departments</h3>
+        <form action="{{ url_for('admin_dashboard') }}" method="POST" class="form-inline">
+            <input type="hidden" name="action" value="add_dept">
+            <input type="text" name="name" placeholder="New Department Name" required>
+            <button type="submit" class="btn-primary">Add</button>
+        </form>
+        <ul>
+            {% for dept in departments %}
+                <li>{{ dept['name'] }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Doctors Management -->
+    <div class="card">
+        <h3>Manage Doctors</h3>
+        <form action="{{ url_for('admin_dashboard') }}" method="POST" class="form-inline">
+            <input type="hidden" name="action" value="add_doc">
+            <input type="text" name="name" placeholder="Doctor Name" required>
+            <select name="department_id" required>
+                <option value="">Select Department</option>
+                {% for dept in departments %}
+                    <option value="{{ dept['id'] }}">{{ dept['name'] }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-primary">Add</button>
+        </form>
+        <ul>
+            {% for doc in doctors %}
+                <li>Dr. {{ doc['name'] }} - {{ doc['dept_name'] }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<div class="card dashboard-card" style="margin-top: 2rem;">
+    <h3>All Appointments</h3>
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Department</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appt in appointments %}
+                <tr>
+                    <td>{{ appt['date'] }}</td>
+                    <td>{{ appt['time_slot'] }}</td>
+                    <td>{{ appt['user_name'] }}</td>
+                    <td>Dr. {{ appt['doctor_name'] }}</td>
+                    <td>{{ appt['dept_name'] }}</td>
+                    <td><span class="badge badge-{{ appt['status']|lower }}">{{ appt['status'] }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

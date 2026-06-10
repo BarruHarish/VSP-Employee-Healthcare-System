@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <h2>Login to Portal</h2>
+    <form action="{{ url_for('login') }}" method="POST" class="form-container">
+        <div class="form-group">
+            <label for="employee_id">Employee ID / Admin Username</label>
+            <input type="text" id="employee_id" name="employee_id" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <div class="form-group">
+            <label for="role">Login As</label>
+            <select name="role" id="role" required>
+                <option value="user">Patient / User</option>
+                <option value="admin">Admin</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-primary btn-block">Login</button>
+    </form>
+    <p class="auth-footer">Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+    <p class="auth-footer" style="font-size: 0.85rem; margin-top: 0.5rem;"><a href="{{ url_for('admin_register') }}">Admin Setup</a></p>
+</div>
+{% endblock %}

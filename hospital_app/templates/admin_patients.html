@@ -1,0 +1,43 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Employees Directory (Patients)</h1>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <input type="text" class="search-box" id="patientSearch" data-target="#patientTable" placeholder="Search by Name or ID...">
+    </div>
+    
+    <table class="data-table" id="patientTable">
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Department</th>
+                <th>Mobile Number</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in patients %}
+            <tr>
+                <td><strong>{{ employee.employee_id }}</strong></td>
+                <td>{{ employee.employee_name }}<br><small>{{ employee.designation }}</small></td>
+                <td>{{ employee.department }}</td>
+                <td>{{ employee.mobile }}<br><small>{{ employee.email }}</small></td>
+                <td class="action-btns">
+                    <!-- Placeholder for viewing details/history -->
+                    <button class="edit" title="View Details"><i class="fas fa-eye"></i></button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center;">No employees registered yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="auth-container">
+    <h2>Patient Registration</h2>
+    <form action="{{ url_for('register') }}" method="POST" class="form-container">
+        <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div class="form-group">
+            <label for="employee_id">Employee ID</label>
+            <input type="text" id="employee_id" name="employee_id" required>
+        </div>
+        <div class="form-group">
+            <label for="mobile_number">Mobile Number</label>
+            <input type="tel" id="mobile_number" name="mobile_number" required>
+        </div>
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required>
+        </div>
+        <button type="submit" class="btn-primary btn-block">Register</button>
+    </form>
+    <p class="auth-footer">Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+</div>
+{% endblock %}

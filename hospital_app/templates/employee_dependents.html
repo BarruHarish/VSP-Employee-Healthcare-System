@@ -1,0 +1,192 @@
+{% extends "employee_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">My Dependents</h1>
+    <button class="btn-primary" data-modal-target="addDepModal" style="background-color: #17a2b8;"><i class="fas fa-plus"></i> Add Dependent</button>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Relationship</th>
+                <th>Date of Birth</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dep in dependents %}
+            <tr>
+                <td><strong>{{ dep.dependent_name }}</strong><br><small>{{ dep.gender }} | {{ dep.blood_group }}</small></td>
+                <td><span class="badge badge-active">{{ dep.relationship }}</span></td>
+                <td>{{ dep.dob }}</td>
+                <td>{{ dep.mobile }}<br><small>Aadhaar: {{ dep.aadhaar_number }}</small></td>
+                <td>
+                    <span class="badge {% if dep.status == 'Active' %}badge-active{% else %}badge-inactive{% endif %}">
+                        {{ dep.status }}
+                    </span>
+                </td>
+                <td class="action-btns">
+                    <button class="edit" data-modal-target="editDepModal" 
+                            data-dependent_id="{{ dep.dependent_id }}"
+                            data-dependent_name="{{ dep.dependent_name }}"
+                            data-relationship="{{ dep.relationship }}"
+                            data-dob="{{ dep.dob }}"
+                            data-gender="{{ dep.gender }}"
+                            data-blood_group="{{ dep.blood_group }}"
+                            data-mobile="{{ dep.mobile }}"
+                            data-aadhaar_number="{{ dep.aadhaar_number }}"
+                            data-status="{{ dep.status }}"
+                            title="Edit">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <form action="{{ url_for('employee_dependents') }}" method="POST" style="display:inline;" onsubmit="return confirm('Delete this dependent?');">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="dependent_id" value="{{ dep.dependent_id }}">
+                        <button type="submit" class="delete" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No dependents added yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Dependent Modal -->
+<div id="addDepModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close-modal">&times;</span>
+        <h2 class="modal-title">Add Dependent</h2>
+        <form action="{{ url_for('employee_dependents') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <input type="hidden" name="action" value="add">
+            
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Dependent Name</label>
+                <input type="text" name="dependent_name" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Relationship</label>
+                <select name="relationship" class="form-control" required>
+                    <option value="">Select</option>
+                    <option value="02 - Spouse">02 - Spouse</option>
+                    <option value="03 - Father">03 - Father</option>
+                    <option value="04 - Mother">04 - Mother</option>
+                    <option value="05 - Son">05 - Son</option>
+                    <option value="06 - Daughter">06 - Daughter</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" name="dob" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Gender</label>
+                <select name="gender" class="form-control">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Blood Group</label>
+                <input type="text" name="blood_group" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="text" name="mobile" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Aadhaar Number (Optional)</label>
+                <input type="text" name="aadhaar_number" class="form-control">
+            </div>
+            
+            <div style="grid-column: 1 / -1; margin-top: 15px;">
+                <button type="submit" class="btn-primary" style="width: 100%;">Add Dependent</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Dependent Modal -->
+<div id="editDepModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+        <span class="close-modal">&times;</span>
+        <h2 class="modal-title">Edit Dependent</h2>
+        <form action="{{ url_for('employee_dependents') }}" method="POST" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="dependent_id" value="">
+            
+            <div class="form-group" style="grid-column: 1 / -1;">
+                <label>Dependent Name</label>
+                <input type="text" name="dependent_name" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Relationship</label>
+                <select name="relationship" class="form-control" required>
+                    <option value="02 - Spouse">02 - Spouse</option>
+                    <option value="03 - Father">03 - Father</option>
+                    <option value="04 - Mother">04 - Mother</option>
+                    <option value="05 - Son">05 - Son</option>
+                    <option value="06 - Daughter">06 - Daughter</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Date of Birth</label>
+                <input type="date" name="dob" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label>Gender</label>
+                <select name="gender" class="form-control">
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Blood Group</label>
+                <input type="text" name="blood_group" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="text" name="mobile" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Aadhaar Number</label>
+                <input type="text" name="aadhaar_number" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" class="form-control">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+            
+            <div style="grid-column: 1 / -1; margin-top: 15px;">
+                <button type="submit" class="btn-primary" style="width: 100%;">Update Dependent</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

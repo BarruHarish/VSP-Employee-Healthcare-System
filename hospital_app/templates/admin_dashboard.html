@@ -1,0 +1,100 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Dashboard Overview</h1>
+</div>
+
+<div class="dashboard-cards">
+    <div class="card">
+        <div class="card-info">
+            <h3>Total Departments</h3>
+            <h2>{{ stats.total_departments }}</h2>
+        </div>
+        <div class="card-icon"><i class="fas fa-building"></i></div>
+    </div>
+    
+    <div class="card">
+        <div class="card-info">
+            <h3>Total Doctors</h3>
+            <h2>{{ stats.total_doctors }}</h2>
+        </div>
+        <div class="card-icon"><i class="fas fa-user-md"></i></div>
+    </div>
+
+    <div class="card">
+        <div class="card-info">
+            <h3>Total Patients</h3>
+            <h2>{{ stats.total_patients }}</h2>
+        </div>
+        <div class="card-icon"><i class="fas fa-users"></i></div>
+    </div>
+
+    <div class="card" style="border-left-color: var(--success-color);">
+        <div class="card-info">
+            <h3>Today's Appointments</h3>
+            <h2>{{ stats.today_appointments }}</h2>
+        </div>
+        <div class="card-icon" style="color: var(--success-color);"><i class="fas fa-calendar-day"></i></div>
+    </div>
+
+    <div class="card" style="border-left-color: var(--warning-color);">
+        <div class="card-info">
+            <h3>Pending Appointments</h3>
+            <h2>{{ stats.pending_appointments }}</h2>
+        </div>
+        <div class="card-icon" style="color: var(--warning-color);"><i class="fas fa-clock"></i></div>
+    </div>
+
+    <div class="card" style="border-left-color: var(--info-color);">
+        <div class="card-info">
+            <h3>Completed</h3>
+            <h2>{{ stats.completed_appointments }}</h2>
+        </div>
+        <div class="card-icon" style="color: var(--info-color);"><i class="fas fa-check-circle"></i></div>
+    </div>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <h3>Recent Appointments</h3>
+        <a href="{{ url_for('admin_appointments') }}" class="btn-primary">View All</a>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Apt. No</th>
+                <th>Patient Name</th>
+                <th>Doctor Name</th>
+                <th>Date</th>
+                <th>Time Slot</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for apt in recent_appointments %}
+            <tr>
+                <td>{{ apt.appointment_number }}</td>
+                <td>{{ apt.patient_name }}</td>
+                <td>{{ apt.doctor_name }}</td>
+                <td>{{ apt.date }}</td>
+                <td>{{ apt.time_slot }}</td>
+                <td>
+                    <span class="badge 
+                        {% if apt.status == 'Pending' %}badge-pending
+                        {% elif apt.status == 'Approved' %}badge-active
+                        {% elif apt.status == 'Completed' %}badge-completed
+                        {% else %}badge-inactive{% endif %}">
+                        {{ apt.status }}
+                    </span>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center;">No recent appointments found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "employee_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Book an Appointment</h1>
+</div>
+
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <form action="{{ url_for('book') }}" method="POST">
+        
+        <!-- Step 1: Select Patient -->
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="font-weight: 600; color: #28a745; font-size: 1.1rem;">Step 1: Select Patient</label>
+            <select name="patient_selection" class="form-control" required style="margin-top: 10px;">
+                <option value="">-- Select Patient --</option>
+                <option value="self">Self (Employee)</option>
+                {% for dep in dependents %}
+                <option value="{{ dep.dependent_id }}">{{ dep.dependent_name }} ({{ dep.relationship }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Step 2: Select Department -->
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="font-weight: 600; color: #28a745; font-size: 1.1rem;">Step 2: Select Department</label>
+            <select name="department_id" class="form-control" required style="margin-top: 10px;">
+                <option value="">-- Select Department --</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}">{{ dept.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Step 3: Select Doctor -->
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="font-weight: 600; color: #28a745; font-size: 1.1rem;">Step 3: Select Doctor</label>
+            <select name="doctor_id" class="form-control" required style="margin-top: 10px;">
+                <option value="">-- Select Doctor --</option>
+                {% for doc in doctors %}
+                <option value="{{ doc.id }}">{{ doc.name }} ({{ doc.specialization }})</option>
+                {% endfor %}
+            </select>
+            <small style="color: var(--text-muted);">Please select a doctor that belongs to your selected department.</small>
+        </div>
+
+        <!-- Step 4: Select Date -->
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="font-weight: 600; color: #28a745; font-size: 1.1rem;">Step 4: Select Date</label>
+            <input type="date" name="appointment_date" class="form-control" required style="margin-top: 10px;">
+        </div>
+
+        <!-- Step 5: Select Time Slot -->
+        <div class="form-group" style="margin-bottom: 20px;">
+            <label style="font-weight: 600; color: #28a745; font-size: 1.1rem;">Step 5: Select Time Slot</label>
+            <select name="appointment_time" class="form-control" required style="margin-top: 10px;">
+                <option value="">-- Select Time Slot --</option>
+                <option value="09:00 AM - 10:00 AM">09:00 AM - 10:00 AM</option>
+                <option value="10:00 AM - 11:00 AM">10:00 AM - 11:00 AM</option>
+                <option value="11:00 AM - 12:00 PM">11:00 AM - 12:00 PM</option>
+                <option value="12:00 PM - 01:00 PM">12:00 PM - 01:00 PM</option>
+                <option value="02:00 PM - 03:00 PM">02:00 PM - 03:00 PM</option>
+                <option value="03:00 PM - 04:00 PM">03:00 PM - 04:00 PM</option>
+                <option value="04:00 PM - 05:00 PM">04:00 PM - 05:00 PM</option>
+            </select>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button type="submit" class="btn-primary" style="width: 100%; background-color: #28a745; font-size: 1.1rem; padding: 15px;">Confirm Appointment</button>
+        </div>
+
+    </form>
+</div>
+{% endblock %}

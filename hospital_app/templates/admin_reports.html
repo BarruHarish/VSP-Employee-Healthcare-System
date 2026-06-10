@@ -1,0 +1,111 @@
+{% extends "admin_base.html" %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chartData = {{ chart_data|tojson|safe }};
+        
+        // Department Appointments Chart
+        const ctxDept = document.getElementById('deptChart').getContext('2d');
+        new Chart(ctxDept, {
+            type: 'bar',
+            data: {
+                labels: chartData.dept_labels,
+                datasets: [{
+                    label: 'Appointments per Department',
+                    data: chartData.dept_data,
+                    backgroundColor: 'rgba(15, 76, 129, 0.7)',
+                    borderColor: 'rgba(15, 76, 129, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+
+        // Doctor Appointments Chart
+        const ctxDoc = document.getElementById('docChart').getContext('2d');
+        new Chart(ctxDoc, {
+            type: 'bar',
+            data: {
+                labels: chartData.doc_labels,
+                datasets: [{
+                    label: 'Appointments per Doctor',
+                    data: chartData.doc_data,
+                    backgroundColor: 'rgba(252, 163, 17, 0.7)',
+                    borderColor: 'rgba(252, 163, 17, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+
+        // Status Chart
+        const ctxStatus = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctxStatus, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.status_labels,
+                datasets: [{
+                    data: chartData.status_data,
+                    backgroundColor: [
+                        '#ffc107', // Pending
+                        '#28a745', // Approved
+                        '#17a2b8', // Completed
+                        '#dc3545'  // Cancelled
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Reports & Analytics</h1>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+    <!-- Department Chart -->
+    <div class="table-container">
+        <div class="table-header">
+            <h3>Department-wise Appointments</h3>
+        </div>
+        <canvas id="deptChart" height="200"></canvas>
+    </div>
+
+    <!-- Status Chart -->
+    <div class="table-container">
+        <div class="table-header">
+            <h3>Appointment Status Distribution</h3>
+        </div>
+        <div style="height: 250px;">
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Doctor Chart -->
+<div class="table-container">
+    <div class="table-header">
+        <h3>Doctor-wise Appointments</h3>
+    </div>
+    <canvas id="docChart" height="100"></canvas>
+</div>
+
+{% endblock %}

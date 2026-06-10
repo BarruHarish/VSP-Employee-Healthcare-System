@@ -1,0 +1,32 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to VSP Hospital</h1>
+    <p>Your Health, Our Priority. Book your appointments online with ease.</p>
+    {% if not session.get('user_id') %}
+        <div class="cta-buttons">
+            <a href="{{ url_for('register') }}" class="btn-primary">Register Now</a>
+            <a href="{{ url_for('login') }}" class="btn-secondary">Login</a>
+        </div>
+    {% else %}
+        <div class="cta-buttons">
+            <a href="{{ url_for('book') }}" class="btn-primary">Book an Appointment</a>
+        </div>
+    {% endif %}
+</div>
+<div class="features">
+    <div class="card">
+        <h3>Expert Doctors</h3>
+        <p>Consult with our top specialists across various departments.</p>
+    </div>
+    <div class="card">
+        <h3>Easy Booking</h3>
+        <p>Schedule your visits seamlessly through our online portal.</p>
+    </div>
+    <div class="card">
+        <h3>Secure Records</h3>
+        <p>Your appointment history is safely stored and easily accessible.</p>
+    </div>
+</div>
+{% endblock %}

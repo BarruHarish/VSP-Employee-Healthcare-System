@@ -1,0 +1,74 @@
+{% extends "admin_base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Appointments Management</h1>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <input type="text" class="search-box" id="aptSearch" data-target="#aptTable" placeholder="Search Appointments...">
+    </div>
+    
+    <table class="data-table" id="aptTable">
+        <thead>
+            <tr>
+                <th>Apt. Number</th>
+                <th>Patient Name</th>
+                <th>Doctor</th>
+                <th>Department</th>
+                <th>Date & Time</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for apt in appointments %}
+            <tr>
+                <td><strong>{{ apt.appointment_number }}</strong></td>
+                <td>{{ apt.patient_name }}</td>
+                <td>{{ apt.doctor_name }}</td>
+                <td>{{ apt.dept_name }}</td>
+                <td>{{ apt.date }}<br><small>{{ apt.time_slot }}</small></td>
+                <td>
+                    <span class="badge 
+                        {% if apt.status == 'Pending' %}badge-pending
+                        {% elif apt.status == 'Approved' %}badge-active
+                        {% elif apt.status == 'Completed' %}badge-completed
+                        {% else %}badge-inactive{% endif %}">
+                        {{ apt.status }}
+                    </span>
+                </td>
+                <td>
+                    {% if apt.status == 'Pending' %}
+                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="id" value="{{ apt.appointment_id }}">
+                        <input type="hidden" name="status" value="Approved">
+                        <button type="submit" class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; margin-right: 5px;">Approve</button>
+                    </form>
+                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="id" value="{{ apt.appointment_id }}">
+                        <input type="hidden" name="status" value="Cancelled">
+                        <button type="submit" class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; background-color: var(--danger-color);">Cancel</button>
+                    </form>
+                    {% elif apt.status == 'Approved' %}
+                    <form action="{{ url_for('admin_appointments') }}" method="POST" style="display:inline;">
+                        <input type="hidden" name="action" value="update_status">
+                        <input type="hidden" name="id" value="{{ apt.appointment_id }}">
+                        <input type="hidden" name="status" value="Completed">
+                        <button type="submit" class="btn-primary" style="padding: 5px 10px; font-size: 0.8rem; background-color: var(--info-color);">Mark Completed</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align: center;">No appointments found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

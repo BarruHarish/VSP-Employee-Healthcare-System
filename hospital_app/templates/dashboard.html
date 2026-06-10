@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h2>Welcome, {{ session.get('name') }}</h2>
+    <a href="{{ url_for('book') }}" class="btn-primary">Book New Appointment</a>
+</div>
+
+<div class="card dashboard-card">
+    <h3>Your Appointments</h3>
+    {% if appointments %}
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Department</th>
+                    <th>Doctor</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appt in appointments %}
+                <tr>
+                    <td>{{ appt['date'] }}</td>
+                    <td>{{ appt['time_slot'] }}</td>
+                    <td>{{ appt['dept_name'] }}</td>
+                    <td>Dr. {{ appt['doctor_name'] }}</td>
+                    <td><span class="badge badge-{{ appt['status']|lower }}">{{ appt['status'] }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p>You have no appointments scheduled.</p>
+    {% endif %}
+</div>
+{% endblock %}

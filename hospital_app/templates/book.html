@@ -1,0 +1,46 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card dashboard-card">
+    <h2>Book an Appointment</h2>
+    <form action="{{ url_for('book') }}" method="POST" class="form-container">
+        <div class="form-group">
+            <label for="department_id">Select Department</label>
+            <select name="department_id" id="department_id" required onchange="filterDoctors()">
+                <option value="">-- Select Department --</option>
+                {% for dept in departments %}
+                    <option value="{{ dept['id'] }}">{{ dept['name'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="doctor_id">Select Doctor</label>
+            <select name="doctor_id" id="doctor_id" required>
+                <option value="">-- Select Doctor --</option>
+                {% for doc in doctors %}
+                    <option value="{{ doc['id'] }}" data-dept="{{ doc['department_id'] }}">Dr. {{ doc['name'] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" required>
+        </div>
+
+        <div class="form-group">
+            <label for="time_slot">Time Slot</label>
+            <select name="time_slot" id="time_slot" required>
+                <option value="09:00 AM">09:00 AM - 10:00 AM</option>
+                <option value="10:00 AM">10:00 AM - 11:00 AM</option>
+                <option value="11:00 AM">11:00 AM - 12:00 PM</option>
+                <option value="02:00 PM">02:00 PM - 03:00 PM</option>
+                <option value="03:00 PM">03:00 PM - 04:00 PM</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-primary">Confirm Booking</button>
+    </form>
+</div>
+{% endblock %}

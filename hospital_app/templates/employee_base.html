@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Portal - VSP Appointment System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_style.css') }}">
+    <style>
+        .sidebar-header h2 { color: #28a745; } /* Green accent for Employee portal */
+        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: #28a745; }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-heartbeat"></i> VSP Health</h2>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="fas fa-user-circle"></i> My Profile</a></li>
+            <li><a href="{{ url_for('employee_dependents') }}" class="{% if request.endpoint == 'employee_dependents' %}active{% endif %}"><i class="fas fa-users"></i> My Dependents</a></li>
+            <li><a href="{{ url_for('book') }}" class="{% if request.endpoint == 'book' %}active{% endif %}"><i class="fas fa-calendar-plus"></i> Book Appointment</a></li>
+        </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="topbar">
+            <button class="menu-toggle" id="menu-toggle"><i class="fas fa-bars"></i></button>
+            <div class="user-profile">
+                <span>Welcome, <strong>{{ session.name }}</strong></span>
+                <a href="{{ url_for('logout') }}" class="btn-logout"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </header>
+
+        <div class="page-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+    <script src="{{ url_for('static', filename='js/admin_script.js') }}"></script>
+</body>
+</html>
