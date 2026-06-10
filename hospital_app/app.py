@@ -31,29 +31,31 @@ def index():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
+    conn = get_db_connection()
     if request.method == 'POST':
         employee_name = request.form['name']
         employee_id = request.form['employee_id']
         mobile_number = request.form['mobile_number']
         password = request.form['password']
+        department = request.form['department'] # Now fetched from dropdown
         
         hashed_pw = generate_password_hash(password)
         
-        conn = get_db_connection()
         try:
             conn.execute('''
                 INSERT INTO employees (employee_name, employee_id, mobile, password, department, designation, email, dob, gender, blood_group, address, status, profile_photo) 
-                VALUES (?, ?, ?, ?, '', '', '', '', '', '', '', 'Active', '')
-            ''', (employee_name, employee_id, mobile_number, hashed_pw))
+                VALUES (?, ?, ?, ?, ?, '', '', '', '', '', '', 'Active', '')
+            ''', (employee_name, employee_id, mobile_number, hashed_pw, department))
             conn.commit()
             flash('Registration successful! Please login.', 'success')
+            conn.close()
             return redirect(url_for('login'))
         except sqlite3.IntegrityError:
             flash('Employee ID already exists.', 'danger')
-        finally:
-            conn.close()
             
-    return render_template('register.html')
+    employee_departments = conn.execute('SELECT * FROM employee_departments WHERE status="Active" ORDER BY name').fetchall()
+    conn.close()
+    return render_template('register.html', employee_departments=employee_departments)
 
 @app.route('/admin_register', methods=['GET', 'POST'])
 def admin_register():
@@ -213,8 +215,9 @@ def employee_profile():
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('dashboard'))
 
+    employee_departments = conn.execute('SELECT * FROM employee_departments WHERE status="Active" ORDER BY name').fetchall()
     conn.close()
-    return render_template('employee_profile.html', employee=employee)
+    return render_template('employee_profile.html', employee=employee, employee_departments=employee_departments)
 
 @app.route('/dependents', methods=['GET', 'POST'])
 def employee_dependents():
@@ -344,7 +347,46 @@ def admin_dashboard():
     conn.close()
     return render_template('admin_dashboard.html', stats=stats, recent_appointments=recent_appointments)
 
-# Admin Departments
+# Admin Employee Departments (Steel Plant)
+@app.route('/admin/employee_departments', methods=['GET', 'POST'])
+def admin_employee_departments():
+    if not check_admin(): return redirect(url_for('login'))
+    conn = get_db_connection()
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'add':
+            name = request.form['name']
+            status = request.form['status']
+            try:
+                conn.execute('INSERT INTO employee_departments (name, status) VALUES (?, ?)', (name, status))
+                conn.commit()
+                flash('Employee Department added successfully!', 'success')
+            except sqlite3.IntegrityError:
+                flash('Department name already exists.', 'danger')
+        elif action == 'edit':
+            id = request.form['id']
+            name = request.form['name']
+            status = request.form['status']
+            try:
+                conn.execute('UPDATE employee_departments SET name=?, status=? WHERE id=?', (name, status, id))
+                conn.commit()
+                flash('Employee Department updated successfully!', 'success')
+            except sqlite3.IntegrityError:
+                flash('Department name already exists.', 'danger')
+        elif action == 'delete':
+            id = request.form['id']
+            conn.execute('DELETE FROM employee_departments WHERE id=?', (id,))
+            conn.commit()
+            flash('Employee Department deleted successfully!', 'success')
+        return redirect(url_for('admin_employee_departments'))
+
+    departments = conn.execute('SELECT * FROM employee_departments ORDER BY name ASC').fetchall()
+    conn.close()
+    return render_template('admin_employee_departments.html', departments=departments)
+
+
+# Admin Hospital Departments
 @app.route('/admin/departments', methods=['GET', 'POST'])
 def admin_departments():
     if not check_admin(): return redirect(url_for('login'))
@@ -504,8 +546,9 @@ def admin_employees():
         return redirect(url_for('admin_employees'))
 
     employees = conn.execute('SELECT * FROM employees ORDER BY id DESC').fetchall()
+    employee_departments = conn.execute('SELECT * FROM employee_departments WHERE status="Active" ORDER BY name').fetchall()
     conn.close()
-    return render_template('admin_employees.html', employees=employees)
+    return render_template('admin_employees.html', employees=employees, employee_departments=employee_departments)
 
 # Admin Patients / Dependents
 @app.route('/admin/patients', methods=['GET', 'POST'])

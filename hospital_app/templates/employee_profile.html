@@ -33,8 +33,13 @@
         </div>
 
         <div class="form-group">
-            <label>Department</label>
-            <input type="text" name="department" class="form-control" value="{{ employee.department }}">
+            <label>Department (Steel Plant)</label>
+            <select name="department" class="form-control">
+                <option value="">Select Department</option>
+                {% for dept in employee_departments %}
+                <option value="{{ dept.name }}" {% if employee.department == dept.name %}selected{% endif %}>{{ dept.name }}</option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="form-group">
